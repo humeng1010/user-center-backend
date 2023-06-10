@@ -13,7 +13,11 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Objects;
+
+import static com.usercenter.constant.UserConstant.SALT;
+import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
 
 /**
  * 用户服务实现类
@@ -27,8 +31,6 @@ import java.util.Objects;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         implements UserService {
 
-    private static final String SALT = "salt";
-    private static final String USER_LOGIN_STATUS = "userLoginStatus";
 
     @Resource
     private HttpServletRequest httpServletRequest;
@@ -132,6 +134,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         httpServletRequest.getSession().setAttribute(USER_LOGIN_STATUS, safetyUser);
 
         return safetyUser;
+    }
+
+    @Override
+    public List<User> searchUsers(String username) {
+        LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.like(StringUtils.isNotBlank(username), User::getUsername, username);
+        return this.list(queryWrapper);
     }
 }
 

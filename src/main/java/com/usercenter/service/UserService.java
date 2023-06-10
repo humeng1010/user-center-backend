@@ -3,6 +3,8 @@ package com.usercenter.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.usercenter.entity.User;
 
+import java.util.List;
+
 /**
  * 用户服务
  *
@@ -29,4 +31,12 @@ public interface UserService extends IService<User> {
      * @return 返回脱敏后的用户信息
      */
     User doLogin(String userAccount, String userPassword);
+
+    /**
+     * 根据用户名搜索用户
+     *
+     * @param username 用户名
+     * @return 所有匹配的用户列表
+     */
+    List<User> searchUsers(String username);
 }
