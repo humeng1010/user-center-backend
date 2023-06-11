@@ -8,6 +8,8 @@ spring:
     password: 12345678
   jackson:
     default-property-inclusion: non_null
+  session:
+    timeout: 86400 # session失效时间 1 天
 server:
   port: 8080
 

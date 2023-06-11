@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
 
@@ -60,7 +61,10 @@ public class UserController {
         if (!isAdmin()) {
             return Collections.emptyList();
         }
-        return userService.searchUsers(username);
+        List<User> userList = userService.searchUsers(username);
+        // 脱敏
+        return userList.stream()
+                .map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
     }
 
 

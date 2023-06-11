@@ -33,6 +33,14 @@ public interface UserService extends IService<User> {
     User doLogin(String userAccount, String userPassword);
 
     /**
+     * 获取脱敏的用户数据
+     *
+     * @param loginUser 源用户数据,包含敏感信息
+     * @return 不含敏感信息的用户数据
+     */
+    User getSafetyUser(User loginUser);
+
+    /**
      * 根据用户名搜索用户
      *
      * @param username 用户名

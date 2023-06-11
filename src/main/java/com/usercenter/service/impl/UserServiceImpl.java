@@ -127,12 +127,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
 
         // 用户脱敏
-        User safetyUser = new User();
-        BeanUtils.copyProperties(loginUser, safetyUser, "userPassword", "updateTime", "isDelete");
+        User safetyUser = getSafetyUser(loginUser);
 
         // 记录用户状态 session
         httpServletRequest.getSession().setAttribute(USER_LOGIN_STATUS, safetyUser);
 
+        return safetyUser;
+    }
+
+    @Override
+    public User getSafetyUser(User loginUser) {
+        User safetyUser = new User();
+        BeanUtils.copyProperties(loginUser, safetyUser, "userPassword", "updateTime", "isDelete");
         return safetyUser;
     }
 
