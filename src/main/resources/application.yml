@@ -12,6 +12,8 @@ spring:
     timeout: 86400 # session失效时间 1 天
 server:
   port: 8080
+  servlet:
+    context-path: /api
 
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
