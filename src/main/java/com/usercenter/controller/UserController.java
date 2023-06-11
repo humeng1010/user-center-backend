@@ -56,6 +56,16 @@ public class UserController {
         return userService.doLogin(userAccount, userPassword);
     }
 
+    /**
+     * 获取当前登陆的用户
+     *
+     * @return 登陆的用户
+     */
+    @GetMapping("/current")
+    public User getCurrentLoginUser() {
+        return (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
+    }
+
     @GetMapping("/search")
     public List<User> searchUsers(@RequestParam("username") String username) {
         if (!isAdmin()) {
