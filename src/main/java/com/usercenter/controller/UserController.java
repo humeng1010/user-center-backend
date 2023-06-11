@@ -63,7 +63,10 @@ public class UserController {
      */
     @GetMapping("/current")
     public User getCurrentLoginUser() {
-        return (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
+        User sessionCacheUser = (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
+        // 防止数据库中的用户信息改变了,session缓存中的用户信息没有改变,造成的数据缓存不一致
+        User databaseUser = userService.getById(sessionCacheUser.getId());
+        return userService.getSafetyUser(databaseUser);
     }
 
     @GetMapping("/search")

@@ -63,10 +63,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (!Objects.equals(userPassword, checkPassword)) {
             return -6L;
         }
+        // TODO 方便测试环境
         // 4.2 密码必须包含至少一个数字、一个小写字母、一个大写字母和一个特殊字符,密码长度必须在 8 到 18 个字符之间。
-        if (!userPassword.matches("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[~`!@#$%^&*()-_+=\\\\[\\\\]\\\\{}|;:',.<>/?]).{8,18}$")) {
-            return -7L;
-        }
+        // if (!userPassword.matches("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[~`!@#$%^&*()-_+=\\\\[\\\\]\\\\{}|;:',.<>/?]).{8,18}$")) {
+        //     return -7L;
+        // }
 
         // 2.账户不能重复
         // 2.1查数据库
@@ -107,10 +108,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             return null;
         }
 
+        // TODO 方便测试环境
         // 4.2 密码必须包含至少一个数字、一个小写字母、一个大写字母和一个特殊字符,密码长度必须在 8 到 18 个字符之间。
-        if (!userPassword.matches("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[~`!@#$%^&*()-_+=\\\\[\\\\]\\\\{}|;:',.<>/?]).{8,18}$")) {
-            return null;
-        }
+        // if (!userPassword.matches("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[~`!@#$%^&*()-_+=\\\\[\\\\]\\\\{}|;:',.<>/?]).{8,18}$")) {
+        //     return null;
+        // }
 
         // 对密码进行加盐加密
         String encryptPassword = SaSecureUtil.md5(SALT + userPassword);

@@ -3,11 +3,12 @@ spring:
     name: user-center
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/star_project
+    url: jdbc:mysql://127.0.0.1:3306/star_project?serverTimezone=UTC&characterEncoding=utf8&useUnicode=true&useSSL=false
     username: root
     password: 12345678
   jackson:
     default-property-inclusion: non_null
+    date-format: yyyy-MM-dd HH:mm:ss
   session:
     timeout: 86400 # session失效时间 1 天
 server:
