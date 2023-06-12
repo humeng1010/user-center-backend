@@ -1,6 +1,7 @@
 package com.usercenter.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.usercenter.common.BaseResponse;
 import com.usercenter.entity.User;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public interface UserService extends IService<User> {
      * @param checkPassword 校验密码
      * @return 新用户ID
      */
-    Long userRegister(String userAccount, String userPassword, String checkPassword);
+    BaseResponse<Long> userRegister(String userAccount, String userPassword, String checkPassword);
 
     /**
      * 登陆
@@ -30,7 +31,7 @@ public interface UserService extends IService<User> {
      * @param userPassword 用户密码
      * @return 返回脱敏后的用户信息
      */
-    User doLogin(String userAccount, String userPassword);
+    BaseResponse<User> doLogin(String userAccount, String userPassword);
 
     /**
      * 获取脱敏的用户数据
@@ -46,5 +47,5 @@ public interface UserService extends IService<User> {
      * @param username 用户名
      * @return 所有匹配的用户列表
      */
-    List<User> searchUsers(String username);
+    BaseResponse<List<User>> searchUsers(String username);
 }

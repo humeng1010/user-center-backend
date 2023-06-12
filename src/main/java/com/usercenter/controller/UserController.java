@@ -1,6 +1,6 @@
 package com.usercenter.controller;
 
-import cn.dev33.satoken.util.SaResult;
+import com.usercenter.common.BaseResponse;
 import com.usercenter.constant.UserConstant;
 import com.usercenter.entity.User;
 import com.usercenter.entity.request.UserLoginRequest;
@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
 
@@ -34,32 +33,36 @@ public class UserController {
     private HttpServletRequest httpServletRequest;
 
     @PostMapping("/register")
-    public Long userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
-        if (Objects.isNull(userRegisterRequest)) return null;
+    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
+        if (Objects.isNull(userRegisterRequest))
+            return BaseResponse.error(50001, "请求体不能为空");
 
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) return null;
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword))
+            return BaseResponse.error(50002, "用户名或密码不能为空");
 
         return userService.userRegister(userAccount, userPassword, checkPassword);
     }
 
     @PostMapping("/login")
-    public User userLogin(@RequestBody UserLoginRequest userLoginRequest) {
-        if (Objects.isNull(userLoginRequest)) return null;
+    public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest) {
+        if (Objects.isNull(userLoginRequest))
+            return BaseResponse.error(50001, "请求体不能为空");
 
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
-        if (StringUtils.isAnyBlank(userAccount, userPassword)) return null;
+        if (StringUtils.isAnyBlank(userAccount, userPassword))
+            return BaseResponse.error(50002, "用户名或密码不能为空");
 
         return userService.doLogin(userAccount, userPassword);
     }
 
     @PostMapping("/out-login")
-    public SaResult userOutLogin() {
+    public BaseResponse<String> userOutLogin() {
         httpServletRequest.getSession().removeAttribute(USER_LOGIN_STATUS);
-        return SaResult.ok();
+        return BaseResponse.ok(200, "ok");
     }
 
     /**
@@ -68,37 +71,36 @@ public class UserController {
      * @return 登陆的用户
      */
     @GetMapping("/current")
-    public User getCurrentLoginUser() {
+    public BaseResponse<User> getCurrentLoginUser() {
         User sessionCacheUser = (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
         if (Objects.isNull(sessionCacheUser)) return null;
         // 防止数据库中的用户信息改变了,session缓存中的用户信息没有改变,造成的数据缓存不一致
         User databaseUser = userService.getById(sessionCacheUser.getId());
-        return userService.getSafetyUser(databaseUser);
+        User safetyUser = userService.getSafetyUser(databaseUser);
+        return BaseResponse.ok(200, safetyUser);
     }
 
     @GetMapping("/search")
-    public List<User> searchUsers(@RequestParam(value = "username", required = false) String username) {
+    public BaseResponse<List<User>> searchUsers(@RequestParam(value = "username", required = false) String username) {
         if (!isAdmin()) {
-            return Collections.emptyList();
+            return BaseResponse.ok(50021, Collections.emptyList());
         }
-        List<User> userList = userService.searchUsers(username);
-        // 脱敏
-        return userList.stream()
-                .map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
+
+        return userService.searchUsers(username);
     }
 
 
     @DeleteMapping("/{id}")
-    public SaResult deleteUserById(@PathVariable("id") Long id) {
+    public BaseResponse<String> deleteUserById(@PathVariable("id") Long id) {
         if (!isAdmin()) {
-            return SaResult.error("对不起,您不是管理员,没有权限进行该操作");
+            return BaseResponse.error(50031, "对不起,您不是管理员,没有权限进行该操作");
         }
-        if (id <= 0) return SaResult.error("id不合法");
+        if (id <= 0) return BaseResponse.error(50032, "id不合法");
         boolean remove = userService.removeById(id);
         if (!remove) {
-            return SaResult.error("删除失败");
+            return BaseResponse.error(50033, "删除失败");
         }
-        return SaResult.ok("删除成功");
+        return BaseResponse.ok(200, "删除成功");
     }
 
     /**
