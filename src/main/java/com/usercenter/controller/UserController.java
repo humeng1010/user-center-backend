@@ -56,6 +56,12 @@ public class UserController {
         return userService.doLogin(userAccount, userPassword);
     }
 
+    @PostMapping("/out-login")
+    public SaResult userOutLogin() {
+        httpServletRequest.getSession().removeAttribute(USER_LOGIN_STATUS);
+        return SaResult.ok();
+    }
+
     /**
      * 获取当前登陆的用户
      *
@@ -64,13 +70,14 @@ public class UserController {
     @GetMapping("/current")
     public User getCurrentLoginUser() {
         User sessionCacheUser = (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
+        if (Objects.isNull(sessionCacheUser)) return null;
         // 防止数据库中的用户信息改变了,session缓存中的用户信息没有改变,造成的数据缓存不一致
         User databaseUser = userService.getById(sessionCacheUser.getId());
         return userService.getSafetyUser(databaseUser);
     }
 
     @GetMapping("/search")
-    public List<User> searchUsers(@RequestParam("username") String username) {
+    public List<User> searchUsers(@RequestParam(value = "username", required = false) String username) {
         if (!isAdmin()) {
             return Collections.emptyList();
         }

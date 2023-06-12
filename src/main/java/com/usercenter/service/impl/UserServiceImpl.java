@@ -1,6 +1,7 @@
 package com.usercenter.service.impl;
 
 import cn.dev33.satoken.secure.SaSecureUtil;
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.usercenter.entity.User;
@@ -82,6 +83,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         // 插入数据
         User user = new User();
+        user.setUsername("momo_" + IdUtil.nanoId(5));
+        user.setAvatarUrl("https://img.alicdn.com/bao/uploaded/i1/232692832/O1CN01XERLVq1Wn6Sq5ufB4_!!232692832.jpg_400x400q90");
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
         this.save(user);
