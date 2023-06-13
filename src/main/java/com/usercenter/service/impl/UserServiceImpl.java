@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.usercenter.common.BaseResponse;
 import com.usercenter.common.ErrorCode;
 import com.usercenter.entity.User;
+import com.usercenter.exception.BusinessException;
 import com.usercenter.mapper.UserMapper;
 import com.usercenter.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -79,7 +80,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         Long count = this.query().eq("userAccount", userAccount).count();
         if (count > 0) {
             // 被注册
-            return BaseResponse.error(ACCOUNT_REPEAT);
+            // return BaseResponse.error(ACCOUNT_REPEAT);
+            throw new BusinessException(ACCOUNT_REPEAT);
         }
 
         // 对密码进行加盐加密
@@ -132,7 +134,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (Objects.isNull(databaseUser)) {
             // 用户不存在
             log.info("user login failed, userAccount can not match userPassword");
-            return BaseResponse.error(LOGIN_ERROR);
+            // return BaseResponse.error(LOGIN_ERROR);
+            throw new BusinessException(LOGIN_ERROR);
         }
 
         // 用户脱敏
