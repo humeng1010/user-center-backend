@@ -19,6 +19,11 @@ public class BaseResponse<T> implements Serializable {
 
     private String message;
 
+    private String description;
+
+    /**
+     * 无参
+     */
     public BaseResponse() {
     }
 
@@ -32,17 +37,36 @@ public class BaseResponse<T> implements Serializable {
         this(code, data, "");
     }
 
-
-    public static <T> BaseResponse<T> ok(Integer code, T data) {
-        return new BaseResponse<>(code, data);
+    public BaseResponse(Integer code, T data, String message, String description) {
+        this.code = code;
+        this.data = data;
+        this.message = message;
+        this.description = description;
     }
 
-    public static <T> BaseResponse<T> ok(Integer code, T data, String message) {
-        return new BaseResponse<>(code, data, message);
+    public BaseResponse(ErrorCode errorCode) {
+        this(errorCode.getCode(), null, errorCode.getMessage(), errorCode.getDescription());
+    }
+
+
+    public static <T> BaseResponse<T> ok(T data) {
+        return new BaseResponse<>(200, data);
+    }
+
+    public static <T> BaseResponse<T> ok(T data, String message) {
+        return new BaseResponse<>(200, data, message);
+    }
+
+    public static <T> BaseResponse<T> ok(String message) {
+        return new BaseResponse<>(200, null, message);
     }
 
     public static <T> BaseResponse<T> error(Integer code, String message) {
         return new BaseResponse<>(code, null, message);
+    }
+
+    public static <T> BaseResponse<T> error(ErrorCode errorCode) {
+        return new BaseResponse<>(errorCode);
     }
 
 }

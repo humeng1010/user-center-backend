@@ -5,6 +5,7 @@ import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.usercenter.common.BaseResponse;
+import com.usercenter.common.ErrorCode;
 import com.usercenter.entity.User;
 import com.usercenter.mapper.UserMapper;
 import com.usercenter.service.UserService;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static com.usercenter.common.ErrorCode.*;
 import static com.usercenter.constant.UserConstant.SALT;
 import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
 
@@ -43,28 +45,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public BaseResponse<Long> userRegister(String userAccount, String userPassword, String checkPassword) {
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
-            return BaseResponse.error(50001, "用户名或密码不能为空");
+            return BaseResponse.error(ErrorCode.PARAMS_ERROR);
         }
         if (userAccount.length() < 4) {
-            return BaseResponse.error(50002, "用户名不能小于四位");
+            return BaseResponse.error(ErrorCode.PARAMS_ERROR);
         }
         // 1.1密码长度8-18位
         if (userPassword.length() < 8
                 || checkPassword.length() < 8
                 || userPassword.length() > 18
                 || checkPassword.length() > 18) {
-            return BaseResponse.error(50003, "密码必须是8-18位");
+            return BaseResponse.error(ErrorCode.PARAMS_ERROR);
         }
 
         // 3.账户
         // 匹配特殊字符一次或多次
         if (userAccount.matches("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？\\\\]+")) {
-            return BaseResponse.error(50004, "账户不能有特殊字符");
+            return BaseResponse.error(ErrorCode.PARAMS_ERROR);
         }
 
         // 4.密码
         if (!Objects.equals(userPassword, checkPassword)) {
-            return BaseResponse.error(50005, "两次密码不一致!");
+            return BaseResponse.error(ErrorCode.PARAMS_ERROR);
         }
         // TODO 方便测试环境
         // 4.2 密码必须包含至少一个数字、一个小写字母、一个大写字母和一个特殊字符,密码长度必须在 8 到 18 个字符之间。
@@ -77,7 +79,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         Long count = this.query().eq("userAccount", userAccount).count();
         if (count > 0) {
             // 被注册
-            return BaseResponse.error(50007, "账户重复");
+            return BaseResponse.error(ACCOUNT_REPEAT);
         }
 
         // 对密码进行加盐加密
@@ -90,27 +92,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserAccount(userAccount);
         user.setUserPassword(encryptPassword);
         this.save(user);
-        return BaseResponse.ok(200, user.getId());
+        return BaseResponse.ok(user.getId());
     }
 
     @Override
     public BaseResponse<User> doLogin(String userAccount, String userPassword) {
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            return BaseResponse.error(50011, "用户名或密码不能为空");
+            return BaseResponse.error(PARAMS_ERROR);
         }
         if (userAccount.length() < 4) {
             return null;
         }
         // 1.1密码长度8-18位
         if (userPassword.length() < 8 || userPassword.length() > 18) {
-            return BaseResponse.error(50012, "密码必须是8-18位");
+            return BaseResponse.error(PARAMS_ERROR);
         }
 
         // 3.账户
         // 匹配特殊字符一次或多次
         if (userAccount.matches("[`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？\\\\]+")) {
-            return BaseResponse.error(50013, "账户不能有特殊字符");
+            return BaseResponse.error(PARAMS_ERROR);
         }
 
         // TODO 方便测试环境
@@ -125,21 +127,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getUserAccount, userAccount)
                 .eq(User::getUserPassword, encryptPassword);
-        User loginUser = this.getOne(queryWrapper);
+        User databaseUser = this.getOne(queryWrapper);
 
-        if (Objects.isNull(loginUser)) {
+        if (Objects.isNull(databaseUser)) {
             // 用户不存在
             log.info("user login failed, userAccount can not match userPassword");
-            return BaseResponse.error(50015, "用户或密码不匹配");
+            return BaseResponse.error(LOGIN_ERROR);
         }
 
         // 用户脱敏
-        User safetyUser = getSafetyUser(loginUser);
+        User safetyUser = getSafetyUser(databaseUser);
 
         // 记录用户状态 session
         httpServletRequest.getSession().setAttribute(USER_LOGIN_STATUS, safetyUser);
 
-        return BaseResponse.ok(200, safetyUser, "登录成功");
+        return BaseResponse.ok(safetyUser, "登录成功");
     }
 
     @Override
@@ -156,8 +158,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         List<User> list = this.list(queryWrapper);
         List<User> users = list.stream().map(this::getSafetyUser).collect(Collectors.toList());
-        
-        return BaseResponse.ok(200, users);
+
+        return BaseResponse.ok(users);
     }
 }
 

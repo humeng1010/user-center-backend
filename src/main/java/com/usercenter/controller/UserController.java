@@ -1,6 +1,7 @@
 package com.usercenter.controller;
 
 import com.usercenter.common.BaseResponse;
+import com.usercenter.common.ErrorCode;
 import com.usercenter.constant.UserConstant;
 import com.usercenter.entity.User;
 import com.usercenter.entity.request.UserLoginRequest;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,13 +35,13 @@ public class UserController {
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
         if (Objects.isNull(userRegisterRequest))
-            return BaseResponse.error(50001, "请求体不能为空");
+            return BaseResponse.error(ErrorCode.NULL_ERROR);
 
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
         String checkPassword = userRegisterRequest.getCheckPassword();
         if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword))
-            return BaseResponse.error(50002, "用户名或密码不能为空");
+            return BaseResponse.error(ErrorCode.PARAMS_ERROR);
 
         return userService.userRegister(userAccount, userPassword, checkPassword);
     }
@@ -49,12 +49,12 @@ public class UserController {
     @PostMapping("/login")
     public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest) {
         if (Objects.isNull(userLoginRequest))
-            return BaseResponse.error(50001, "请求体不能为空");
+            return BaseResponse.error(ErrorCode.NULL_ERROR);
 
         String userAccount = userLoginRequest.getUserAccount();
         String userPassword = userLoginRequest.getUserPassword();
         if (StringUtils.isAnyBlank(userAccount, userPassword))
-            return BaseResponse.error(50002, "用户名或密码不能为空");
+            return BaseResponse.error(ErrorCode.PARAMS_ERROR);
 
         return userService.doLogin(userAccount, userPassword);
     }
@@ -62,7 +62,7 @@ public class UserController {
     @PostMapping("/out-login")
     public BaseResponse<String> userOutLogin() {
         httpServletRequest.getSession().removeAttribute(USER_LOGIN_STATUS);
-        return BaseResponse.ok(200, "ok");
+        return BaseResponse.ok("ok");
     }
 
     /**
@@ -77,13 +77,13 @@ public class UserController {
         // 防止数据库中的用户信息改变了,session缓存中的用户信息没有改变,造成的数据缓存不一致
         User databaseUser = userService.getById(sessionCacheUser.getId());
         User safetyUser = userService.getSafetyUser(databaseUser);
-        return BaseResponse.ok(200, safetyUser);
+        return BaseResponse.ok(safetyUser);
     }
 
     @GetMapping("/search")
     public BaseResponse<List<User>> searchUsers(@RequestParam(value = "username", required = false) String username) {
         if (!isAdmin()) {
-            return BaseResponse.ok(50021, Collections.emptyList());
+            return BaseResponse.error(ErrorCode.NO_AUTH_ERROR);
         }
 
         return userService.searchUsers(username);
@@ -93,14 +93,14 @@ public class UserController {
     @DeleteMapping("/{id}")
     public BaseResponse<String> deleteUserById(@PathVariable("id") Long id) {
         if (!isAdmin()) {
-            return BaseResponse.error(50031, "对不起,您不是管理员,没有权限进行该操作");
+            return BaseResponse.error(ErrorCode.NO_AUTH_ERROR);
         }
-        if (id <= 0) return BaseResponse.error(50032, "id不合法");
+        if (id <= 0) return BaseResponse.error(ErrorCode.PARAMS_ERROR);
         boolean remove = userService.removeById(id);
         if (!remove) {
-            return BaseResponse.error(50033, "删除失败");
+            return BaseResponse.error(ErrorCode.SERVICE_ERROR);
         }
-        return BaseResponse.ok(200, "删除成功");
+        return BaseResponse.ok("删除成功");
     }
 
     /**
