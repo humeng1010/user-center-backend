@@ -11,6 +11,10 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
   session:
     timeout: 86400 # session失效时间 1 天
+  servlet:
+    multipart:
+      max-file-size: 10MB # 单个文件大小 默认 1MB
+      max-request-size: 100MB # 总文件大小  默认 10MB
 server:
   port: 8080
   servlet:

@@ -5,13 +5,12 @@ import com.usercenter.common.BaseResponse;
 import com.usercenter.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 
 @RestController
 @RequestMapping("/upload")
@@ -23,6 +22,12 @@ public class UploadController {
     private String basePath;
 
 
+    /**
+     * 文件上传
+     *
+     * @param file
+     * @return
+     */
     @PostMapping
     public BaseResponse<String> uploadAvatar(MultipartFile file) {
         try {
@@ -46,6 +51,44 @@ public class UploadController {
             throw new RuntimeException(e);
         }
 
+    }
+
+    /**
+     * 文件下载
+     *
+     * @param name     文件名称
+     * @param response 响应对象
+     */
+    @GetMapping("/download")
+    public void download(@RequestParam String name, HttpServletResponse response) {
+        try (
+                // 读取文件
+                FileInputStream fis = new FileInputStream(basePath + name);
+                // 文件读取缓冲流
+                BufferedInputStream bis = new BufferedInputStream(fis)
+        ) {
+            response.reset();
+            // 获取响应输出流
+            ServletOutputStream outputStream = response.getOutputStream();
+            // 继续包装成缓冲流 提高文件传输速率
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
+            response.setContentType("image/jpeg");
+
+            // 定义字节数组 1MB 相当于一个桶,用于不断读取数据和写出数据
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = bis.read(buffer)) != -1) {
+                // 把读取的字节数组写出去
+                bufferedOutputStream.write(buffer, 0, len);
+                bufferedOutputStream.flush();
+            }
+
+            // 这里可以不用关闭释放资源,他会根据请求和响应的结束而被结束掉
+            // bufferedOutputStream.close();
+            // outputStream.close();
+        } catch (Exception e) {
+            throw new BusinessException(50009, e.getMessage(), "读取文件异常");
+        }
     }
 
 }
