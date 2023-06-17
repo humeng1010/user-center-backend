@@ -104,6 +104,15 @@ public class UserController {
         return BaseResponse.ok("删除成功");
     }
 
+
+    @PutMapping("/update")
+    public BaseResponse<String> updateUserById(@RequestBody User user) {
+        userService.updateById(user);
+
+        return BaseResponse.ok("更新成功");
+
+    }
+
     /**
      * 判断用户是否是管理员
      *
