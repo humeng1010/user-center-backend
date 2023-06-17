@@ -66,7 +66,7 @@ public class UploadController {
             // 如果session中是null则抛出未登录异常 返回给前端
             if (Objects.isNull(user)) throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
             // 更新数据库的信息,注意session中的缓存信息也要更新
-            user.setAvatarUrl(filePath);
+            user.setAvatarUrl(fileName);
             userService.updateById(user);
             // 更新session缓存
             request.getSession().setAttribute(USER_LOGIN_STATUS, user);
