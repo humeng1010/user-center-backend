@@ -2,18 +2,26 @@ package com.usercenter.controller;
 
 import cn.hutool.core.lang.UUID;
 import com.usercenter.common.BaseResponse;
+import com.usercenter.common.ErrorCode;
+import com.usercenter.entity.User;
 import com.usercenter.exception.BusinessException;
+import com.usercenter.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.Objects;
+
+import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
 
 @RestController
-@RequestMapping("/upload")
+@RequestMapping("/common")
 @Slf4j
 public class UploadController {
 
@@ -21,31 +29,49 @@ public class UploadController {
     @Value("${upload-img.path}")
     private String basePath;
 
+    @Resource
+    private UserService userService;
+
+    @Resource
+    private HttpServletRequest request;
+
 
     /**
      * 文件上传
      *
-     * @param file
+     * @param avatar
      * @return
      */
-    @PostMapping
-    public BaseResponse<String> uploadAvatar(MultipartFile file) {
+    @PostMapping("/upload")
+    public BaseResponse<String> uploadAvatar(MultipartFile avatar) {
         try {
 //            防止目录不存在
             File file1 = new File(basePath);
             if (!file1.exists()) {
                 boolean mkdirs = file1.mkdirs();
-                if (!mkdirs) throw new BusinessException(50008, "服务器创建文件夹失败", "请检查路径是否正确");
+                if (!mkdirs)
+                    throw new BusinessException(50008, "服务器创建文件夹失败", "请检查路径是否正确");
             }
             String uuid = UUID.randomUUID().toString();
-            String originalFilename = file.getOriginalFilename();
+            String originalFilename = avatar.getOriginalFilename();
             log.info("文件的原始名称:{}", originalFilename);
             assert originalFilename != null;
             // 获取文件后缀 带 .
             String substring = originalFilename.substring(originalFilename.lastIndexOf("."));
             String fileName = uuid + substring;
-//            文件转储
-            file.transferTo(new File(basePath + fileName));
+
+            String filePath = basePath + fileName;
+            // 从session中获取当前的用户
+            User user = (User) request.getSession().getAttribute(USER_LOGIN_STATUS);
+            // 如果session中是null则抛出未登录异常 返回给前端
+            if (Objects.isNull(user)) throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+            // 更新数据库的信息,注意session中的缓存信息也要更新
+            user.setAvatarUrl(filePath);
+            userService.updateById(user);
+            // 更新session缓存
+            request.getSession().setAttribute(USER_LOGIN_STATUS, user);
+            // 文件转储
+            avatar.transferTo(new File(filePath));
             return BaseResponse.ok(fileName, "上传文件成功");
         } catch (IOException e) {
             throw new RuntimeException(e);
