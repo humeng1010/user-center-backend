@@ -9,4 +9,4 @@ COPY target/user-center-backend-0.0.1.jar  ./target/user-center-backend-0.0.1.ja
 #RUN mvn package -DskipTests
 
 # Run the web service on container startup.
-CMD ["java","-jar","/app/target/user-center-backend-0.0.1.jar","--spring.profiles.active=pro"]
+CMD ["java","-jar","/app/target/user-center-backend-0.0.1.jar","--spring.profiles.active=prod"]
