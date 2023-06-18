@@ -23,6 +23,7 @@ import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
 @RestController
 @RequestMapping("/common")
 @Slf4j
+@CrossOrigin
 public class UploadController {
 
 

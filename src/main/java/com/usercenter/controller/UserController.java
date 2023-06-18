@@ -25,6 +25,7 @@ import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
  */
 @RestController
 @RequestMapping("/user")
+@CrossOrigin
 public class UserController {
 
     @Resource

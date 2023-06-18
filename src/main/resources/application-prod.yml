@@ -29,3 +29,9 @@ logging:
     root: error
     sql: error
     web: error
+mybatis-plus:
+  global-config:
+    banner: off
+
+sa-token:
+  is-print: off
