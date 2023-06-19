@@ -13,6 +13,8 @@ public enum ErrorCode {
     NOT_LOGIN_ERROR(40100, "未登录", ""),
     NO_AUTH_ERROR(40101, "无权限", ""),
     ACCOUNT_REPEAT(40201, "账户重复", ""),
+
+    ACCOUNT_STATUS_DISABLE(40202, "账户被禁用", ""),
     SERVICE_ERROR(50000, "操作失败", ""),
 
     SYSTEM_ERROR(50001, "", "系统内部异常");

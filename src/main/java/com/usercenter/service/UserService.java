@@ -1,10 +1,9 @@
 package com.usercenter.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.usercenter.common.BaseResponse;
 import com.usercenter.entity.User;
-
-import java.util.List;
 
 /**
  * 用户服务
@@ -44,8 +43,10 @@ public interface UserService extends IService<User> {
     /**
      * 根据用户名搜索用户
      *
+     * @param current
+     * @param pageSize
      * @param username 用户名
      * @return 所有匹配的用户列表
      */
-    BaseResponse<List<User>> searchUsers(String username);
+    BaseResponse<IPage<User>> searchUsers(Long current, Long pageSize, String username);
 }

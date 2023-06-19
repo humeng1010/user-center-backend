@@ -3,6 +3,8 @@ package com.usercenter.service.impl;
 import cn.dev33.satoken.secure.SaSecureUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.usercenter.common.BaseResponse;
 import com.usercenter.common.ErrorCode;
@@ -17,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -137,6 +138,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             // return BaseResponse.error(LOGIN_ERROR);
             throw new BusinessException(LOGIN_ERROR);
         }
+        if (Objects.equals(databaseUser.getUserStatus(), 1)) {
+            //    用户被禁用
+            throw new BusinessException(ACCOUNT_STATUS_DISABLE);
+
+        }
 
         // 用户脱敏
         User safetyUser = getSafetyUser(databaseUser);
@@ -155,14 +161,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public BaseResponse<List<User>> searchUsers(String username) {
+    public BaseResponse<IPage<User>> searchUsers(Long current, Long pageSize, String username) {
+        IPage<User> userPage = new Page<>(current, pageSize);
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.like(StringUtils.isNotBlank(username), User::getUsername, username);
 
-        List<User> list = this.list(queryWrapper);
-        List<User> users = list.stream().map(this::getSafetyUser).collect(Collectors.toList());
+        this.page(userPage, queryWrapper);
 
-        return BaseResponse.ok(users);
+        userPage.setRecords(userPage.getRecords().stream().map(this::getSafetyUser).collect(Collectors.toList()));
+
+        return BaseResponse.ok(userPage);
     }
 }
 

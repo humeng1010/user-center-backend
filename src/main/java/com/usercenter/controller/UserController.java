@@ -1,5 +1,7 @@
 package com.usercenter.controller;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.usercenter.common.BaseResponse;
 import com.usercenter.common.ErrorCode;
 import com.usercenter.constant.UserConstant;
@@ -13,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 import java.util.Objects;
 
 import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
@@ -83,12 +84,17 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public BaseResponse<List<User>> searchUsers(@RequestParam(value = "username", required = false) String username) {
+    // current=1&pageSize=5
+    public BaseResponse<IPage<User>> searchUsers(
+            @RequestParam("current") Long current,
+            @RequestParam("pageSize") Long pageSize,
+            @RequestParam(value = "username", required = false) String username) {
+        
         if (!isAdmin()) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
 
-        return userService.searchUsers(username);
+        return userService.searchUsers(current, pageSize, username);
     }
 
 
@@ -103,6 +109,48 @@ public class UserController {
             throw new BusinessException(ErrorCode.SERVICE_ERROR);
         }
         return BaseResponse.ok("删除成功");
+    }
+
+    @PutMapping("/{id}")
+    public BaseResponse<String> changeUserStatus(@PathVariable("id") Long id) {
+        LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper
+                .set(id != null, User::getUserStatus, 1)
+                .eq(id != null, User::getId, id);
+        boolean update = userService.update(updateWrapper);
+        if (!update) {
+            return BaseResponse.error(50020, "禁用失败");
+        }
+        return BaseResponse.ok("禁用成功");
+
+    }
+
+    @PutMapping("/enable/{id}")
+    public BaseResponse<String> enableUserStatusById(@PathVariable("id") Long id) {
+        LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper
+                .set(id != null, User::getUserStatus, 0)
+                .eq(id != null, User::getId, id);
+        boolean update = userService.update(updateWrapper);
+        if (!update) {
+            return BaseResponse.error(50020, "启用失败");
+        }
+        return BaseResponse.ok("启用成功");
+
+    }
+
+    @PutMapping("/enable-admin/{id}")
+    public BaseResponse<String> enableAdminRoleById(@PathVariable("id") Long id) {
+        LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper
+                .set(id != null, User::getUserRole, 1)
+                .eq(id != null, User::getId, id);
+        boolean update = userService.update(updateWrapper);
+        if (!update) {
+            return BaseResponse.error(50020, "授权失败");
+        }
+        return BaseResponse.ok("授权成功");
+
     }
 
 
