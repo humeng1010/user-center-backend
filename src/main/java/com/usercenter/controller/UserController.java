@@ -26,7 +26,7 @@ import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
  */
 @RestController
 @RequestMapping("/user")
-@CrossOrigin
+// @CrossOrigin // 上线通过 nginx 进行反向代理解决跨域
 public class UserController {
 
     @Resource
@@ -89,7 +89,7 @@ public class UserController {
             @RequestParam("current") Long current,
             @RequestParam("pageSize") Long pageSize,
             @RequestParam(value = "username", required = false) String username) {
-        
+
         if (!isAdmin()) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }

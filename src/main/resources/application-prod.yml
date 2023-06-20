@@ -20,9 +20,8 @@ server:
   port: 8081
   servlet:
     context-path: /api
-
 upload-img:
-  path: classpath:/images/ # 上传文件路径
+  path: /app/images/ # 上传文件路径
 
 logging:
   level:
@@ -32,6 +31,8 @@ logging:
 mybatis-plus:
   global-config:
     banner: off
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
 
 sa-token:
   is-print: off

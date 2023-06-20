@@ -23,7 +23,7 @@ import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
 @RestController
 @RequestMapping("/common")
 @Slf4j
-@CrossOrigin
+// @CrossOrigin // 上线通过 nginx 进行反向代理解决跨域
 public class UploadController {
 
 
