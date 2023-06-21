@@ -1,11 +1,16 @@
 package com.usercenter.service.impl;
 
 import cn.dev33.satoken.secure.SaSecureUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.usercenter.common.BaseResponse;
 import com.usercenter.common.ErrorCode;
 import com.usercenter.entity.User;
@@ -19,7 +24,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.usercenter.common.ErrorCode.*;
@@ -172,6 +177,115 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         return BaseResponse.ok(userPage);
     }
+
+    /**
+     * 分页根据标签查询用户
+     *
+     * @param currentPage 当前页
+     * @param pageSize    页大小
+     * @param tagNameList 标签列表
+     * @return 符合标签的分页数据
+     */
+    @Override
+    public BaseResponse<IPage<User>> searchUsersByTags(Long currentPage, Long pageSize, List<String> tagNameList) {
+        if (CollectionUtil.isEmpty(tagNameList)) {
+            throw new BusinessException(NULL_ERROR);
+        }
+        IPage<User> userPage = new Page<>(currentPage, pageSize);
+
+        // 2. 通过内存查询 更灵活
+        this.page(userPage);
+        List<User> userList = userPage.getRecords();
+        Gson gson = new Gson();
+
+        // 过滤不满足条件的用户
+        List<User> users = userList.stream().filter(user -> {
+                    String tags = user.getTags();
+                    if (StrUtil.isBlank(tags)) {
+                        return false;
+                    }
+                    Set<String> tagSet = gson.fromJson(tags, new TypeToken<Set<String>>() {
+                    }.getType());
+
+                    // 遍历查询标签集合
+                    for (String tagName : tagNameList) {
+                        // 如果用户标签不包含查询的标签则过滤掉
+                        if (!tagSet.contains(tagName)) {
+                            return false;
+                        }
+                    }
+                    // 如果遍历完了都没有返回false则说明该用户满足条件
+                    return true;
+                }).map(this::getSafetyUser)
+                .collect(Collectors.toList());
+
+        userPage.setRecords(users);
+
+        return BaseResponse.ok(userPage, "根据标签查询用户成功");
+    }
+
+    /**
+     * 根据标签查询所有用户
+     *
+     * @param tags 标签
+     * @return 所有符合标签的用户
+     */
+    @Override
+    public BaseResponse<List<User>> searchAllUsersByTags(List<String> tags) {
+        List<User> list = this.list();
+
+        List<User> result = list.stream().filter(user -> {
+            String tagListStr = user.getTags();
+            Gson gson = new Gson();
+            Set<String> tagSet = gson.fromJson(tagListStr, new TypeToken<Set<String>>() {
+            }.getType());
+            // 简化版的非空处理 如果set集合为空则会执行orElse
+            tagSet = Optional.ofNullable(tagSet).orElse(new HashSet<>());
+
+            // 全部转换为大写再进行比较
+            tagSet = tagSet.stream().map(String::toUpperCase).collect(Collectors.toSet());
+
+            for (String tag : tags) {
+                // 如果条件不在数据库的集合中
+                if (!tagSet.contains(tag.toUpperCase())) {
+                    return false;
+                }
+            }
+            return true;
+        }).map(this::getSafetyUser).collect(Collectors.toList());
+
+        return BaseResponse.ok(result);
+    }
+
+    /**
+     * 通过SQL 根据标签查询用户 废弃的方法
+     *
+     * @param currentPage 当前页
+     * @param pageSize    页大小
+     * @param tagNameList 标签列表
+     * @return 符合标签的分页数据
+     */
+    @Deprecated
+    private BaseResponse<IPage<User>> searchUsersByTagsBySQL(Long currentPage, Long pageSize, List<String> tagNameList) {
+        if (CollectionUtil.isEmpty(tagNameList)) {
+            throw new BusinessException(NULL_ERROR);
+        }
+        IPage<User> userPage = new Page<>(currentPage, pageSize);
+        // 1. 通过数据库查询
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        for (String tagName : tagNameList) {
+            queryWrapper = queryWrapper.like("tags", tagName);
+        }
+        this.page(userPage, queryWrapper);
+
+        userPage.setRecords(userPage.getRecords()
+                .stream().map(this::getSafetyUser).collect(Collectors.toList()));
+
+
+        return BaseResponse.ok(userPage, "根据标签查询用户成功");
+    }
+
+
 }
 
 

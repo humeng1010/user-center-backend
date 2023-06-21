@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Objects;
 
 import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
@@ -160,6 +161,19 @@ public class UserController {
 
         return BaseResponse.ok("更新成功");
 
+    }
+
+    @GetMapping("/searchUsersByTagsWithPage")
+    public BaseResponse<IPage<User>> searchUsersByTags(
+            @RequestParam(value = "currentPage", defaultValue = "1", required = false) Long currentPage,
+            @RequestParam(value = "pageSize", defaultValue = "10", required = false) Long pageSize,
+            @RequestParam(value = "tags") List<String> tags) {
+        return userService.searchUsersByTags(currentPage, pageSize, tags);
+    }
+
+    @GetMapping("/searchUsersByTags")
+    public BaseResponse<List<User>> searchAllUsersByTags(@RequestParam(value = "tags") List<String> tags) {
+        return userService.searchAllUsersByTags(tags);
     }
 
     /**

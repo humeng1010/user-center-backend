@@ -56,6 +56,11 @@ public class User implements Serializable {
     private String email;
 
     /**
+     * 标签列表JSON
+     */
+    private String tags;
+
+    /**
      * 是否有效,0:正常
      */
     private Integer userStatus;
