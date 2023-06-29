@@ -2,6 +2,7 @@ package com.usercenter.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
@@ -18,6 +19,9 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
  */
 @Configuration
 @EnableSwagger2WebMvc
+// 用于指定在开发环境加载这个Bean,或者这个配置使用yml配置文件的方式
+@Profile({"dev"})
+// https://doc.xiaominfo.com/docs/features/accessControl#351-%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E5%B1%8F%E8%94%BD%E8%B5%84%E6%BA%90
 public class SwaggerConfig {
 
     @Bean(value = "defaultApi2")
