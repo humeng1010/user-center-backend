@@ -6,6 +6,9 @@ import com.usercenter.common.ErrorCode;
 import com.usercenter.entity.User;
 import com.usercenter.exception.BusinessException;
 import com.usercenter.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +26,7 @@ import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
 @RestController
 @RequestMapping("/common")
 @Slf4j
+@Api(tags = "文件上传下载接口")
 // @CrossOrigin // 上线通过 nginx 进行反向代理解决跨域
 public class UploadController {
 
@@ -43,6 +47,8 @@ public class UploadController {
      * @param avatar
      * @return
      */
+    @ApiImplicitParam(name = "avatar", value = "文件", required = true)
+    @ApiOperation(value = "上传文件")
     @PostMapping("/upload")
     public BaseResponse<String> uploadAvatar(MultipartFile avatar) {
         try {
@@ -86,6 +92,8 @@ public class UploadController {
      * @param name     文件名称
      * @param response 响应对象
      */
+    @ApiImplicitParam(name = "name", value = "文件名称", required = true)
+    @ApiOperation("文件下载")
     @GetMapping("/download")
     public void download(@RequestParam String name, HttpServletResponse response) {
         try (

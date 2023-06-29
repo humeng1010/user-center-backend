@@ -17,11 +17,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loginInterceptor)
                 // 拦截所有请求
-                .addPathPatterns("/**")
+                .addPathPatterns("/user/**", "/common/**")
                 // 放行登陆和注册请求
                 .excludePathPatterns(
                         "/user/register",
-                        "/user/login");
+                        "/user/login"
+                );
 
     }
 }

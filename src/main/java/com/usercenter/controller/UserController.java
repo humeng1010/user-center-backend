@@ -10,6 +10,8 @@ import com.usercenter.entity.request.UserLoginRequest;
 import com.usercenter.entity.request.UserRegisterRequest;
 import com.usercenter.exception.BusinessException;
 import com.usercenter.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,7 @@ import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
  */
 @RestController
 @RequestMapping("/user")
+@Api(tags = "用户相关接口")
 // @CrossOrigin // 上线通过 nginx 进行反向代理解决跨域
 public class UserController {
 
@@ -36,6 +39,7 @@ public class UserController {
     @Resource
     private HttpServletRequest httpServletRequest;
 
+    @ApiOperation("注册新用户")
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
         if (Objects.isNull(userRegisterRequest))
