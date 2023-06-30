@@ -59,6 +59,11 @@ public class User implements Serializable {
      * 标签列表JSON
      */
     private String tags;
+    
+    /**
+     * 个人简介
+     */
+    private String profile;
 
     /**
      * 是否有效,0:正常

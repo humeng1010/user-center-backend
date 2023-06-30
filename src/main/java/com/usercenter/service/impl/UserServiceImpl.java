@@ -188,37 +188,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     @Override
     public BaseResponse<IPage<User>> searchUsersByTags(Long currentPage, Long pageSize, List<String> tagNameList) {
+        // 判断标签集合不能为空
         if (CollectionUtil.isEmpty(tagNameList)) {
             throw new BusinessException(NULL_ERROR);
         }
         IPage<User> userPage = new Page<>(currentPage, pageSize);
 
         // 2. 通过内存查询 更灵活
+        // 2.1 查询当前页所有的用户
         this.page(userPage);
+        // 2.2 获取当前页的用户集合
         List<User> userList = userPage.getRecords();
         Gson gson = new Gson();
 
         // 过滤不满足条件的用户
         List<User> users = userList.stream().filter(user -> {
+                    // 获取用户标签JSON
                     String tags = user.getTags();
                     if (StrUtil.isBlank(tags)) {
                         return false;
                     }
+                    // 把JSON数组转为Set集合
                     Set<String> tagSet = gson.fromJson(tags, new TypeToken<Set<String>>() {
                     }.getType());
 
                     // 遍历查询标签集合
                     for (String tagName : tagNameList) {
                         // 如果用户标签不包含查询的标签则过滤掉
-                        if (!tagSet.contains(tagName)) {
-                            return false;
+                        if (tagSet.contains(tagName)) {
+                            return true;
                         }
                     }
                     // 如果遍历完了都没有返回false则说明该用户满足条件
-                    return true;
+                    return false;
                 }).map(this::getSafetyUser)
                 .collect(Collectors.toList());
 
+        // 更新结果并返回
         userPage.setRecords(users);
 
         return BaseResponse.ok(userPage, "根据标签查询用户成功");
