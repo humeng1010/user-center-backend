@@ -28,8 +28,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.usercenter.common.ErrorCode.*;
-import static com.usercenter.constant.UserConstant.SALT;
-import static com.usercenter.constant.UserConstant.USER_LOGIN_STATUS;
+import static com.usercenter.constant.UserConstant.*;
 
 /**
  * 用户服务实现类
@@ -261,6 +260,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }).map(this::getSafetyUser).collect(Collectors.toList());
 
         return BaseResponse.ok(result);
+    }
+
+    @Override
+    public BaseResponse<String> updateUser(User user) {
+        // 仅管理员和自己可以修改
+        User cacheUser = (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
+        if (cacheUser == null) {
+            throw new BusinessException(NOT_LOGIN_ERROR);
+        }
+        Long userId = user.getId();
+        Long cacheUserId = cacheUser.getId();
+
+        if (Objects.equals(cacheUser.getUserRole(), ADMIN_ROLE)) {
+            //    是管理员,直接可以修改所有用户的信息
+            this.updateById(user);
+            return BaseResponse.ok("ok", "修改成功");
+        }
+        if (!Objects.equals(cacheUserId, userId)) {
+            // 如果普通用户修改的不是自己的信息,则抛出异常
+            throw new BusinessException(NO_AUTH_ERROR);
+        }
+        this.updateById(user);
+
+        return BaseResponse.ok("ok", "修改成功");
     }
 
     /**

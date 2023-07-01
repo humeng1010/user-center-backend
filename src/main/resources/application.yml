@@ -12,16 +12,28 @@ spring:
     default-property-inclusion: non_null
     date-format: yyyy-MM-dd HH:mm:ss
   session:
-    timeout: 86400 # session失效时间 1 天
+    timeout: 86400 # session失效时间 单位分钟 60天
+    store-type: redis # 设置session的存储仓库为redis
   servlet:
     multipart:
       max-file-size: 10MB # 单个文件大小 默认 1MB
       max-request-size: 100MB # 总文件大小  默认 10MB
+  # redis配置
+  redis:
+    port: 6379
+    host: localhost
+    database: 0
+    lettuce:
+      pool:
+        max-active: 8
+        min-idle: 0
+        max-idle: 8
+        max-wait: 10000
+
 server:
   port: 8080
   servlet:
     context-path: /api
-
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   configuration:

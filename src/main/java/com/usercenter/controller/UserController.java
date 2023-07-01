@@ -161,10 +161,11 @@ public class UserController {
 
     @PutMapping("/update")
     public BaseResponse<String> updateUserById(@RequestBody User user) {
-        userService.updateById(user);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
 
-        return BaseResponse.ok("更新成功");
-
+        return userService.updateUser(user);
     }
 
     @GetMapping("/searchUsersByTagsWithPage")
