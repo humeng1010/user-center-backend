@@ -168,6 +168,14 @@ public class UserController {
         return userService.updateUser(user);
     }
 
+    @GetMapping("/recommend")
+    public BaseResponse<IPage<User>> recommendUsers(
+            @RequestParam(value = "currentPage", defaultValue = "1", required = false) Long currentPage,
+            @RequestParam(value = "pageSize", defaultValue = "10", required = false) Long pageSize
+    ) {
+        return userService.recommendUsers(currentPage, pageSize);
+    }
+
     @GetMapping("/searchUsersByTagsWithPage")
     public BaseResponse<IPage<User>> searchUsersByTags(
             @RequestParam(value = "currentPage", defaultValue = "1", required = false) Long currentPage,

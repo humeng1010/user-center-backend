@@ -1,9 +1,11 @@
 package com.usercenter.service.impl;
 
 import cn.dev33.satoken.secure.SaSecureUtil;
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -13,6 +15,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.usercenter.common.BaseResponse;
 import com.usercenter.common.ErrorCode;
+import com.usercenter.constant.RedisConstant;
 import com.usercenter.entity.User;
 import com.usercenter.exception.BusinessException;
 import com.usercenter.mapper.UserMapper;
@@ -20,11 +23,13 @@ import com.usercenter.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.usercenter.common.ErrorCode.*;
@@ -45,6 +50,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private HttpServletRequest httpServletRequest;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
 
     @Override
@@ -187,6 +195,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
      */
     @Override
     public BaseResponse<IPage<User>> searchUsersByTags(Long currentPage, Long pageSize, List<String> tagNameList) {
+        User currentLoginUser = (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
+        if (currentLoginUser == null) {
+            return BaseResponse.error(NOT_LOGIN_ERROR);
+        }
         // 判断标签集合不能为空
         if (CollectionUtil.isEmpty(tagNameList)) {
             throw new BusinessException(NULL_ERROR);
@@ -223,6 +235,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 }).map(this::getSafetyUser)
                 .collect(Collectors.toList());
 
+        // 删除集合中的自己
+        users.removeIf(user -> Objects.equals(user.getId(), currentLoginUser.getId()));
         // 更新结果并返回
         userPage.setRecords(users);
 
@@ -252,11 +266,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
             for (String tag : tags) {
                 // 如果条件不在数据库的集合中
-                if (!tagSet.contains(tag.toUpperCase())) {
-                    return false;
+                if (tagSet.contains(tag.toUpperCase())) {
+                    return true;
                 }
             }
-            return true;
+            return false;
         }).map(this::getSafetyUser).collect(Collectors.toList());
 
         return BaseResponse.ok(result);
@@ -284,6 +298,55 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         this.updateById(user);
 
         return BaseResponse.ok("ok", "修改成功");
+    }
+
+    @Override
+    public BaseResponse<IPage<User>> recommendUsers(Long currentPage, Long pageSize) {
+
+        User currentLoginUser = (User) httpServletRequest.getSession().getAttribute(USER_LOGIN_STATUS);
+        if (currentLoginUser == null) {
+            String key = RedisConstant.USER_RECOMMEND_KEY + currentPage + "-" + pageSize;
+            // 读取redis
+            String pageStr = stringRedisTemplate.opsForValue()
+                    .get(key);
+            Gson gson = new Gson();
+            Page cacheResponse = JSONUtil.toBean(pageStr, Page.class);
+            if (BeanUtil.isNotEmpty(cacheResponse)) {
+                return BaseResponse.ok(cacheResponse, "默认推荐成功");
+            }
+            // redis没有,则读取数据库然后保存到redis
+            IPage<User> userPage = new Page<>(currentPage, pageSize);
+            //    如果没有登录则直接返回10条数据
+            this.page(userPage);
+            // 缓存到redis
+            String userPageJson = gson.toJson(userPage);
+            stringRedisTemplate.opsForValue().set(key, userPageJson);
+
+            return BaseResponse.ok(userPage, "默认推荐成功");
+        }
+
+        // 读取缓存
+        String key = RedisConstant.USER_RECOMMEND_KEY + currentLoginUser.getId() + ":" + currentPage + "-" + pageSize;
+
+        String resultStr = stringRedisTemplate.opsForValue().get(key);
+        BaseResponse cacheResponse = JSONUtil.toBean(resultStr, BaseResponse.class);
+
+        if (BeanUtil.isNotEmpty(cacheResponse)) {
+            return cacheResponse;
+        }
+
+
+        // 缓存没有,读数据库,然后写缓存
+        // 用户登录了,根据用户的标签推荐相同标签的
+        String tags = currentLoginUser.getTags();
+        Gson gson = new Gson();
+        List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>() {
+        }.getType());
+
+        BaseResponse<IPage<User>> result = this.searchUsersByTags(currentPage, pageSize, tagList);
+        String resultStrForRedis = gson.toJson(result);
+        stringRedisTemplate.opsForValue().set(key, resultStrForRedis, RedisConstant.USER_RECOMMEND_TTL, TimeUnit.MINUTES);
+        return result;
     }
 
     /**

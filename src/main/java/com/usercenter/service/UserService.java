@@ -65,4 +65,7 @@ public interface UserService extends IService<User> {
     BaseResponse<List<User>> searchAllUsersByTags(List<String> tags);
 
     BaseResponse<String> updateUser(User user);
+
+
+    BaseResponse<IPage<User>> recommendUsers(Long currentPage, Long pageSize);
 }

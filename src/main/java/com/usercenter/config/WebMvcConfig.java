@@ -20,8 +20,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns("/user/**", "/common/**")
                 // 放行登陆和注册请求
                 .excludePathPatterns(
-                        "/user/register",
-                        "/user/login"
+                        "/user/register",// 放行注册
+                        "/user/login",// 放行登录
+                        "/user/recommend",// 放行推荐
+                        "/common/download"// 放行文件下载
                 );
 
     }
