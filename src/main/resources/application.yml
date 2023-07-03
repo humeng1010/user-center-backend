@@ -23,12 +23,6 @@ spring:
     port: 6379
     host: localhost
     database: 0
-    lettuce:
-      pool:
-        max-active: 8
-        min-idle: 0
-        max-idle: 8
-        max-wait: 10000
 
 server:
   port: 8080

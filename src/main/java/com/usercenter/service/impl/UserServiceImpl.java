@@ -320,8 +320,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             this.page(userPage);
             // 缓存到redis
             String userPageJson = gson.toJson(userPage);
-            stringRedisTemplate.opsForValue().set(key, userPageJson);
-
+            try {
+                stringRedisTemplate.opsForValue().set(key, userPageJson);
+            } catch (Exception e) {
+                log.error("redis缓存失败");
+            }
             return BaseResponse.ok(userPage, "默认推荐成功");
         }
 
@@ -345,7 +348,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         BaseResponse<IPage<User>> result = this.searchUsersByTags(currentPage, pageSize, tagList);
         String resultStrForRedis = gson.toJson(result);
-        stringRedisTemplate.opsForValue().set(key, resultStrForRedis, RedisConstant.USER_RECOMMEND_TTL, TimeUnit.MINUTES);
+        try {
+            stringRedisTemplate.opsForValue().set(key, resultStrForRedis, RedisConstant.USER_RECOMMEND_TTL, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.error("redis缓存失败");
+        }
         return result;
     }
 
